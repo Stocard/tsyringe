@@ -367,14 +367,15 @@ constants, or things that have a already been instantiated in a particular way.
 ```
 
 This provider is used to resolve a token using a given factory. The factory has full access
-to the dependency container.
+to the dependency container and the current resolution context.
 
-We have provided 2 factories for you to use, though any function that matches the `FactoryFunction<T>` signature
-can be used as a factory:
+Any function that matches the `FactoryFunction<T>` signature can be used as a factory:
 
 ```typescript
-type FactoryFunction<T> = (dependencyContainer: DependencyContainer) => T;
+type ContextAwareFactoryFunction<T> = (dependencyContainer: DependencyContainer, context: ResolutionContext) => T;
 ```
+
+We have provided 3 factories for you to use but please be aware that the resolution context is not available when using these factories since they might cache the result and thus potentially could lead to unexpected behavior due to resolution scoped instances being part of the cached result.
 
 ##### instanceCachingFactory
 
@@ -393,14 +394,14 @@ import {instanceCachingFactory} from "tsyringe";
 ##### instancePerContainerCachingFactory
 
 This factory is used to lazy construct an object and cache result per `DependencyContainer`, returning the single instance for each subsequent
-resolution from a single container. This is very similar to `@scoped(Lifecycle.ContainerScoped)`
+resolution from a single container. This is very similar to `@scoped(Lifecycle.ContainerScoped)` and thus the originally provided scoped context is ignored.
 
 ```typescript
 import {instancePerContainerCachingFactory} from "tsyringe";
 
 {
-  token: "ContainerScopedFoo";
-  useFactory: instancePerContainerCachingFactory<Foo>(c => c.resolve(Foo));
+  token: "ContainerScopedFoo",
+  useFactory: instancePerContainerCachingFactory<Foo>(c => c.resolve(Foo))
 }
 ```
 
@@ -413,11 +414,12 @@ has an optional parameter to resolve fresh each time.
 import {predicateAwareClassFactory} from "tsyringe";
 
 {
-  token: useFactory: predicateAwareClassFactory<Foo>(
+  token: "Foo",
+  useFactory: predicateAwareClassFactory<Foo>(
     c => c.resolve(Bar).useHttps, // Predicate for evaluation
     FooHttps, // A FooHttps will be resolved from the container if predicate is true
     FooHttp // A FooHttp will be resolved if predicate is false
-  );
+  )
 }
 ```
 
