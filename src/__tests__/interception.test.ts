@@ -1,4 +1,5 @@
 import {instance as globalContainer} from "../dependency-container";
+import ResolutionContext from "../resolution-context";
 
 // beforeResolution .resolve() tests
 test("beforeResolution interceptor gets called correctly", () => {
@@ -94,7 +95,21 @@ test("beforeResolution interceptor gets called correctly on resolveAll()", () =>
   globalContainer.beforeResolution(Bar, interceptorFn);
   globalContainer.resolveAll(Bar);
 
-  expect(interceptorFn).toBeCalledWith(expect.any(Function), "All");
+  expect(interceptorFn).toBeCalledWith(
+    expect.any(Function),
+    "All",
+    expect.any(ResolutionContext)
+  );
+});
+
+test("beforeResolution interceptor gets called with the appropriate resolution context", () => {
+  class Bar {}
+  const interceptorFn = jest.fn();
+  const context = new ResolutionContext();
+  globalContainer.beforeResolution(Bar, interceptorFn);
+  globalContainer.resolveAll(Bar, context);
+
+  expect(interceptorFn).toBeCalledWith(expect.any(Function), "All", context);
 });
 
 // afterResolution .resolve() tests
@@ -122,7 +137,8 @@ test("afterResolution interceptor passes object of correct type", () => {
   expect(interceptorFn).toBeCalledWith(
     expect.any(Function),
     expect.any(Object),
-    "Single"
+    "Single",
+    expect.any(ResolutionContext)
   );
 });
 
@@ -212,6 +228,22 @@ test("afterResolution interceptor gets called correctly on resolveAll()", () => 
   expect(interceptorFn).toBeCalledWith(
     expect.any(Function),
     expect.any(Object),
-    "All"
+    "All",
+    expect.any(ResolutionContext)
+  );
+});
+
+test("afterResolution interceptor gets called with the appropriate resolution context", () => {
+  class Bar {}
+  const interceptorFn = jest.fn();
+  const context = new ResolutionContext();
+  globalContainer.afterResolution(Bar, interceptorFn);
+  globalContainer.resolveAll(Bar, context);
+
+  expect(interceptorFn).toBeCalledWith(
+    expect.any(Function),
+    expect.any(Object),
+    "All",
+    context
   );
 });

@@ -2,6 +2,8 @@ import injectable from "../decorators/injectable";
 import {instance as globalContainer} from "../dependency-container";
 import Lifecycle from "../types/lifecycle";
 import scoped from "../decorators/scoped";
+import {DependencyContainer} from "../types";
+import ResolutionContext from "../resolution-context";
 
 describe("Scoped registrations", () => {
   describe("ResolutionScoped", () => {
@@ -32,6 +34,53 @@ describe("Scoped registrations", () => {
         {useClass: X},
         {lifecycle: Lifecycle.ResolutionScoped}
       );
+      const a = globalContainer.resolve(A);
+
+      expect(a.b.x).toBe(a.c.x);
+    });
+
+    it("uses the same instance during the same resolution chain when using a factory", () => {
+      class X {}
+
+      class B {
+        constructor(public x: X) {}
+      }
+
+      class C {
+        constructor(public x: X) {}
+      }
+
+      @injectable()
+      class A {
+        constructor(public b: B, public c: C) {}
+      }
+
+      globalContainer.register(
+        X,
+        {useClass: X},
+        {lifecycle: Lifecycle.ResolutionScoped}
+      );
+
+      globalContainer.register(B, {
+        useFactory: (
+          container: DependencyContainer,
+          context: ResolutionContext
+        ) => {
+          const x = container.resolve(X, context);
+          return new B(x);
+        }
+      });
+
+      globalContainer.register(C, {
+        useFactory: (
+          container: DependencyContainer,
+          context: ResolutionContext
+        ) => {
+          const x = container.resolve(X, context);
+          return new C(x);
+        }
+      });
+
       const a = globalContainer.resolve(A);
 
       expect(a.b.x).toBe(a.c.x);

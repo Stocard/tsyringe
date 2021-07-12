@@ -221,18 +221,18 @@ class InternalDependencyContainer implements DependencyContainer {
       );
     }
 
-    this.executePreResolutionInterceptor<T>(token, "Single");
+    this.executePreResolutionInterceptor<T>(token, "Single", context);
 
     if (registration) {
       const result = this.resolveRegistration(registration, context) as T;
-      this.executePostResolutionInterceptor(token, result, "Single");
+      this.executePostResolutionInterceptor(token, result, "Single", context);
       return result;
     }
 
     // No registration for this token, but since it's a constructor, return an instance
     if (isConstructorToken(token)) {
       const result = this.construct(token, context);
-      this.executePostResolutionInterceptor(token, result, "Single");
+      this.executePostResolutionInterceptor(token, result, "Single", context);
       return result;
     }
 
@@ -243,7 +243,8 @@ class InternalDependencyContainer implements DependencyContainer {
 
   private executePreResolutionInterceptor<T>(
     token: InjectionToken<T>,
-    resolutionType: ResolutionType
+    resolutionType: ResolutionType,
+    resolutionContext: ResolutionContext
   ): void {
     if (this.interceptors.preResolution.has(token)) {
       const remainingInterceptors = [];
@@ -251,7 +252,7 @@ class InternalDependencyContainer implements DependencyContainer {
         if (interceptor.options.frequency != "Once") {
           remainingInterceptors.push(interceptor);
         }
-        interceptor.callback(token, resolutionType);
+        interceptor.callback(token, resolutionType, resolutionContext);
       }
 
       this.interceptors.preResolution.setAll(token, remainingInterceptors);
@@ -261,7 +262,8 @@ class InternalDependencyContainer implements DependencyContainer {
   private executePostResolutionInterceptor<T>(
     token: InjectionToken<T>,
     result: T | T[],
-    resolutionType: ResolutionType
+    resolutionType: ResolutionType,
+    resolutionContext: ResolutionContext
   ): void {
     if (this.interceptors.postResolution.has(token)) {
       const remainingInterceptors = [];
@@ -271,7 +273,7 @@ class InternalDependencyContainer implements DependencyContainer {
         if (interceptor.options.frequency != "Once") {
           remainingInterceptors.push(interceptor);
         }
-        interceptor.callback(token, result, resolutionType);
+        interceptor.callback(token, result, resolutionType, resolutionContext);
       }
 
       this.interceptors.postResolution.setAll(token, remainingInterceptors);
@@ -317,7 +319,7 @@ class InternalDependencyContainer implements DependencyContainer {
           ))
         : this.construct(registration.provider.useClass, context);
     } else if (isFactoryProvider(registration.provider)) {
-      resolved = registration.provider.useFactory(this);
+      resolved = registration.provider.useFactory(this, context);
     } else {
       resolved = this.construct(registration.provider, context);
     }
@@ -342,20 +344,20 @@ class InternalDependencyContainer implements DependencyContainer {
       );
     }
 
-    this.executePreResolutionInterceptor(token, "All");
+    this.executePreResolutionInterceptor(token, "All", context);
 
     if (registrations) {
       const result = registrations.map(item =>
         this.resolveRegistration<T>(item, context)
       );
 
-      this.executePostResolutionInterceptor(token, result, "All");
+      this.executePostResolutionInterceptor(token, result, "All", context);
       return result;
     }
 
     // No registration for this token, but since it's a constructor, return an instance
     const result = [this.construct(token as constructor<T>, context)];
-    this.executePostResolutionInterceptor(token, result, "All");
+    this.executePostResolutionInterceptor(token, result, "All", context);
     return result;
   }
 
