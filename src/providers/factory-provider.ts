@@ -1,5 +1,4 @@
-import ResolutionContext from "../resolution-context";
-import DependencyContainer from "../types/dependency-container";
+import ContextAwareFactoryFunction from "../factories/context-aware-factory-function";
 import Provider from "./provider";
 
 /**
@@ -8,10 +7,7 @@ import Provider from "./provider";
  * you need instance caching, your factory method must implement it.
  */
 export default interface FactoryProvider<T> {
-  useFactory: (
-    dependencyContainer: DependencyContainer,
-    context: ResolutionContext
-  ) => T;
+  useFactory: ContextAwareFactoryFunction<T>;
 }
 
 export function isFactoryProvider<T>(

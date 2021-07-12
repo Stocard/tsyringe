@@ -500,17 +500,17 @@ class InternalDependencyContainer implements DependencyContainer {
         if (isTokenDescriptor(param)) {
           if (isTransformDescriptor(param)) {
             return param.multiple
-              ? this.resolve(param.transform).transform(
-                  this.resolveAll(param.token),
+              ? this.resolve(param.transform, context).transform(
+                  this.resolveAll(param.token, context),
                   ...param.transformArgs
                 )
-              : this.resolve(param.transform).transform(
+              : this.resolve(param.transform, context).transform(
                   this.resolve(param.token, context),
                   ...param.transformArgs
                 );
           } else {
             return param.multiple
-              ? this.resolveAll(param.token)
+              ? this.resolveAll(param.token, context)
               : this.resolve(param.token, context);
           }
         } else if (isTransformDescriptor(param)) {
